@@ -1,7 +1,7 @@
 import time
 
 import pygame
-from numpy import cos, sin, pi, arange
+from numpy import cos, sin, pi
 from numba import njit
 
 
@@ -56,7 +56,7 @@ class Camera:
                 ko = max(1, dist)
                 color = tuple(round(i / ko) for i in color)
                 half_height = self.height / 2
-                pygame.draw.line(screen, color, (x, half_height - 200 / ko), (x, half_height + 200 / ko), 3)
+                pygame.draw.line(screen, color, (x, half_height - half_height / ko), (x, half_height + half_height / ko), 3)
                 if 0 <= dist <= 0.5:
                     self.no_forward = True
             elif dist == 0:
@@ -83,6 +83,8 @@ def distance(x_, y_, angle_, x1, y1, x2, y2):
         if x1 == x2:
             return x1
         elif y1 == y2:
+            if x1 < 0:
+                return max(x1, x2)
             return min(x1, x2)
         else:
             dx = x2 - x1
@@ -91,8 +93,8 @@ def distance(x_, y_, angle_, x1, y1, x2, y2):
     return None
 
 
-WIDTH = 600
-HEIGHT = 401
+WIDTH = 1000
+HEIGHT = 700
 FPS = 30
 
 # Задаём цвета
@@ -104,14 +106,15 @@ BLUE = (0, 0, 255)
 
 # polygons = [(5 * cos(i), 5 * sin(i), 5 * cos(i + pi/32), 5 * sin(i + pi/32), WHITE) for i in arange(0, 3 * pi / 2,
 # pi/32)]
-polygons = [(-3, 3, -3, -13, RED), (-3, 3, 13, 3, RED), (13, 3, 13, -1, RED), (13, -1, 13, -3, GREEN),
-            (13, -3, 13, -13, RED), (13, -13, -3, -13, RED), (-3, -3, 3, -3, WHITE), (3, 3, 3, 0.5, BLUE),
-            (3, -9, 3, -0.5, BLUE), (5, 3, 5, -9, BLUE), (-1, -5, 1, -5, WHITE), (1, -5, 1, -7, WHITE),
-            (-1, -7, 1, -7, WHITE), (-1, -7, -1, -11, WHITE), (-1, -11, 1, -11, WHITE), (1, -11, 1, -9, WHITE),
-            (3, -11, 9, -11, WHITE), (9, -11, 9, -13, WHITE), (11, -13, 11, -9, WHITE), (7, -9, 9, -9, WHITE),
-            (9, -9, 7, -7, WHITE), (7, -6, 7, -9, WHITE), (9, -6, 11, -6, WHITE), (11, -6, 11, -7, WHITE),
-            (11, -7, 9, -7, WHITE), (9, -7, 9, -6, WHITE), (9, -4, 7, -4, WHITE), (7, -4, 7, 0, WHITE),
-            (7, 0, 9, -2, WHITE), (13, -3, 10, -3, WHITE), (13, -1, 10, -1, WHITE), (7, 1, 11, 1, WHITE)]
+# polygons = [(-3, 3, -3, -13, RED), (-3, 3, 13, 3, RED), (13, 3, 13, -1, RED), (13, -1, 13, -3, GREEN),
+#             (13, -3, 13, -13, RED), (13, -13, -3, -13, RED), (-3, -3, 3, -3, WHITE), (3, 3, 3, 0.5, BLUE),
+#             (3, -9, 3, -0.5, BLUE), (5, 3, 5, -9, BLUE), (-1, -5, 1, -5, WHITE), (1, -5, 1, -7, WHITE),
+#             (-1, -7, 1, -7, WHITE), (-1, -7, -1, -11, WHITE), (-1, -11, 1, -11, WHITE), (1, -11, 1, -9, WHITE),
+#             (3, -11, 9, -11, WHITE), (9, -11, 9, -13, WHITE), (11, -13, 11, -9, WHITE), (7, -9, 9, -9, WHITE),
+#             (9, -9, 7, -7, WHITE), (7, -6, 7, -9, WHITE), (9, -6, 11, -6, WHITE), (11, -6, 11, -7, WHITE),
+#             (11, -7, 9, -7, WHITE), (9, -7, 9, -6, WHITE), (9, -4, 7, -4, WHITE), (7, -4, 7, 0, WHITE),
+#             (7, 0, 9, -2, WHITE), (13, -3, 10, -3, WHITE), (13, -1, 10, -1, WHITE), (7, 1, 11, 1, WHITE)]
+polygons = [(-1, 0, -3, 0, RED)]
 cam = Camera(0, 0, pi / 3, WIDTH, HEIGHT, 0)
 
 # Создаем игру и окно
@@ -119,7 +122,7 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("3D")
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 25)
+font = pygame.font.Font(None, cam.width // 24)
 text = font.render("Найдите выход", True, GREEN)
 # Цикл игры
 running = True
@@ -146,14 +149,17 @@ while running:
         cam.move_forward(d_time)
     elif pressed_keys[81]:
         cam.move_backward(d_time)
+
+    print(f"{cam.x:0.4f}", f"{cam.y:0.4f}")
+
     # Обновление
     screen.fill(BLACK)
     # Рендеринг
     cam.render(screen, polygons)
     if 10 <= cam.x <= 13 and -3 <= cam.y <= -1 and - pi / 6 <= cam.direction <= pi / 6:
         text = font.render("Выход найден!", True, GREEN)
-    screen.blit(text, [232, 250])
-
+    screen.blit(text, [cam.width / 2 - cam.width / 8, cam.height / 3])
+    
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
 
